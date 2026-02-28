@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清掃・整理整頓 タスクリスト</title>
+  <style>
+    :root {
+      --primary:       #2563eb;
+      --primary-light: #dbeafe;
+      --success:       #16a34a;
+      --success-light: #dcfce7;
+      --edit:          #d97706;
+      --edit-light:    #fef3c7;
+      --danger:        #dc2626;
+      --danger-light:  #fee2e2;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --radius: 10px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      min-height: 100vh;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 20px 16px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 12px rgba(37,99,235,0.3);
+      transition: background 0.25s;
+    }
+    body.edit-mode header { background: var(--edit); box-shadow: 0 2px 12px rgba(217,119,6,0.3); }
+
+    header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.03em; }
+    header .subtitle { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
+
+    .edit-banner {
+      display: none;
+      margin-top: 8px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    body.edit-mode .edit-banner { display: block; }
+
+    /* ===== 進捗バー ===== */
+    .progress-wrap { margin-top: 12px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; opacity: 0.9; margin-bottom: 5px; }
+    .progress-bar-bg { background: rgba(255,255,255,0.3); border-radius: 99px; height: 10px; overflow: hidden; }
+    .progress-bar-fill { background: white; height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+    /* ===== コントロール ===== */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .btn {
+      padding: 7px 13px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.78; }
+
+    .btn-reset  { background: var(--danger-light); color: var(--danger); }
+    .btn-all    { background: var(--success-light); color: var(--success); }
+    .btn-print  { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .btn-edit   { background: var(--edit-light); color: var(--edit); }
+    .btn-edit.active { background: var(--edit); color: white; }
+    .btn-restore { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-300); display: none; }
+    body.edit-mode .btn-restore { display: inline-block; }
+
+    .total-badge {
+      margin-left: auto;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+    }
+    body.edit-mode .total-badge { background: var(--edit-light); color: var(--edit); }
+
+    /* ===== メイン ===== */
+    main { max-width: 720px; margin: 0 auto; padding: 16px 12px 80px; }
+
+    /* ===== セクション ===== */
+    .section {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: outline 0.15s;
+    }
+    body.edit-mode .section { outline: 2px dashed var(--edit-light); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      padding: 13px 16px;
+      gap: 10px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    /* 通常モード：ヘッダークリックで折り畳み */
+    body:not(.edit-mode) .section-header { cursor: pointer; user-select: none; }
+
+    .section-icon { font-size: 1.3rem; line-height: 1; }
+    .section-title { font-size: 0.95rem; font-weight: 700; flex: 1; }
+    .section-count { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; }
+    .section-chevron { font-size: 0.75rem; color: var(--gray-400); transition: transform 0.2s; }
+    .section.collapsed .section-chevron { transform: rotate(-90deg); }
+
+    /* 編集モード専用: セクション操作ボタン */
+    .section-edit-btns {
+      display: none;
+      gap: 4px;
+    }
+    body.edit-mode .section-edit-btns { display: flex; }
+
+    .sec-btn {
+      background: none;
+      border: 1px solid var(--gray-200);
+      border-radius: 5px;
+      padding: 3px 7px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      color: var(--gray-600);
+      font-weight: 600;
+    }
+    .sec-btn:hover { background: var(--gray-50); }
+    .sec-btn.danger { border-color: #fca5a5; color: var(--danger); }
+    .sec-btn.danger:hover { background: var(--danger-light); }
+
+    .task-list { padding: 6px 0; }
+    .section.collapsed .task-list { display: none; }
+
+    /* ===== タスク行 ===== */
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 16px;
+      transition: background 0.15s;
+      position: relative;
+    }
+    body:not(.edit-mode) .task-item { cursor: pointer; }
+    body:not(.edit-mode) .task-item:hover { background: var(--gray-50); }
+
+    .task-item.done { background: var(--success-light); }
+    .task-item.done .task-name { text-decoration: line-through; color: var(--gray-400); }
+
+    /* チェック丸 */
+    .task-check {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-200);
+      flex-shrink: 0; margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+      transition: all 0.15s;
+    }
+    .task-item.done .task-check { background: var(--success); border-color: var(--success); color: white; }
+    body.edit-mode .task-check { display: none; }
+
+    .task-info { flex: 1; min-width: 0; }
+    .task-name { font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
+    .task-note { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; line-height: 1.4; }
+
+    .task-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    /* 編集モード: タスク操作ボタン群 */
+    .task-action-btns {
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    body.edit-mode .task-action-btns { display: flex; }
+    body.edit-mode .task-meta { display: none; }
+
+    .task-btn {
+      background: none;
+      border: 1px solid var(--gray-200);
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .task-btn.edit-btn  { color: var(--primary); border-color: var(--primary-light); }
+    .task-btn.edit-btn:hover  { background: var(--primary-light); }
+    .task-btn.del-btn   { color: var(--danger); border-color: #fca5a5; }
+    .task-btn.del-btn:hover   { background: var(--danger-light); }
+    .task-btn.up-btn, .task-btn.dn-btn { color: var(--gray-600); font-size: 0.7rem; }
+    .task-btn.up-btn:hover, .task-btn.dn-btn:hover { background: var(--gray-100); }
+
+    /* 並び替えハンドル */
+    .drag-handle {
+      display: none;
+      cursor: grab;
+      color: var(--gray-300);
+      font-size: 1.1rem;
+      padding: 0 4px;
+      align-self: center;
+    }
+    body.edit-mode .drag-handle { display: block; }
+
+    /* 所要時間バッジ */
+    .time-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+    .time-short { background: #d1fae5; color: #065f46; }
+    .time-mid   { background: #fef3c7; color: #92400e; }
+    .time-long  { background: #fee2e2; color: #991b1b; }
+
+    /* 優先度ドット */
+    .priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .p-high { background: #ef4444; }
+    .p-mid  { background: #f59e0b; }
+    .p-low  { background: var(--gray-200); }
+
+    /* タスク追加ボタン行（編集モードのみ） */
+    .add-task-row {
+      display: none;
+      padding: 8px 16px 12px;
+    }
+    body.edit-mode .add-task-row { display: block; }
+
+    .add-task-btn {
+      width: 100%;
+      padding: 8px;
+      border: 2px dashed var(--gray-200);
+      border-radius: 8px;
+      background: none;
+      color: var(--gray-400);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .add-task-btn:hover { border-color: var(--edit); color: var(--edit); background: var(--edit-light); }
+
+    /* セクション追加ボタン */
+    .add-section-row {
+      display: none;
+      padding: 4px 0 16px;
+    }
+    body.edit-mode .add-section-row { display: block; }
+
+    .add-section-btn {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius);
+      background: none;
+      color: var(--gray-400);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .add-section-btn:hover { border-color: var(--edit); color: var(--edit); background: var(--edit-light); }
+
+    /* ===== 完了メッセージ ===== */
+    .complete-msg { text-align: center; padding: 40px 20px; color: var(--success); display: none; }
+    .complete-msg.show { display: block; }
+    .complete-msg .emoji { font-size: 3rem; }
+    .complete-msg p { font-size: 1rem; font-weight: 700; margin-top: 10px; }
+
+    /* ===========================
+       モーダル
+    =========================== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: white;
+      border-radius: 14px;
+      padding: 24px 20px 20px;
+      width: 100%; max-width: 460px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      transform: translateY(12px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-800);
+    }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--gray-600);
+      margin-bottom: 5px;
+    }
+    .form-group input[type="text"],
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 7px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      background: white;
+      color: var(--gray-800);
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus { border-color: var(--primary); }
+    .form-group textarea { resize: vertical; min-height: 64px; }
+
+    /* ラジオ風ボタン (時間・優先度) */
+    .radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .radio-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1.5px solid var(--gray-200);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: white;
+      color: var(--gray-600);
+      transition: all 0.12s;
+    }
+    .radio-btn:hover { border-color: var(--gray-300); }
+    .radio-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .modal-footer .btn { flex: 1; padding: 10px; font-size: 0.88rem; }
+    .btn-save   { background: var(--primary); color: white; }
+    .btn-save:hover { opacity: 0.88; }
+    .btn-cancel { background: var(--gray-100); color: var(--gray-600); }
+
+    /* セクション名編集モーダルのアイコン一覧 */
+    .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .icon-opt {
+      width: 36px; height: 36px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .icon-opt:hover { border-color: var(--edit); background: var(--edit-light); }
+    .icon-opt.selected { border-color: var(--primary); background: var(--primary-light); }
+
+    /* ===== 印刷 ===== */
+    @media print {
+      header { position: static; background: none; color: black; box-shadow: none; }
+      .controls, .add-task-row, .add-section-row, .task-action-btns, .section-edit-btns, .drag-handle { display: none !important; }
+      .task-check { display: flex !important; }
+      .task-meta { display: flex !important; }
+      .section { box-shadow: none; border: 1px solid var(--gray-200); }
+      .section.collapsed .task-list { display: block; }
+    }
+
+    @media (max-width: 480px) {
+      .task-name { font-size: 0.85rem; }
+      .section-title { font-size: 0.9rem; }
+      .controls { gap: 6px; }
+      .btn { padding: 6px 10px; font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<header>
+  <h1>🧹 清掃・整理整頓 タスクリスト</h1>
+  <p class="subtitle">空き時間に上から順に実施してください</p>
+  <div class="edit-banner">✏ 編集モード ― タスクの追加・変更・削除ができます</div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>進捗</span>
+      <span id="progressText">0 / 0 完了</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== コントロール ===== -->
+<div class="controls">
+  <button class="btn btn-reset"   onclick="resetAll()">↺ リセット</button>
+  <button class="btn btn-all"     onclick="checkAll()">✓ 全完了</button>
+  <button class="btn btn-print"   onclick="window.print()">🖨 印刷</button>
+  <button class="btn btn-edit"    id="editModeBtn" onclick="toggleEditMode()">✏ 編集モード</button>
+  <button class="btn btn-restore" onclick="restoreDefaults()">🔄 初期値に戻す</button>
+  <span  class="total-badge"      id="totalBadge">0件</span>
+</div>
+
+<!-- ===== メインコンテンツ ===== -->
+<main>
+  <div id="taskSections"></div>
+  <div class="add-section-row">
+    <button class="add-section-btn" onclick="openAddSectionModal()">＋ エリアを追加する</button>
+  </div>
+  <div class="complete-msg" id="completeMsg">
+    <div class="emoji">🎉</div>
+    <p>全タスク完了！お疲れ様でした！</p>
+  </div>
+</main>
+
+<!-- ===========================
+     モーダル（タスク編集・追加）
+=========================== -->
+<div class="modal-overlay" id="taskModalOverlay" onclick="onOverlayClick(event,'taskModalOverlay')">
+  <div class="modal">
+    <div class="modal-title" id="taskModalTitle">タスクを編集</div>
+
+    <div class="form-group">
+      <label>タスク名 <span style="color:#ef4444">*</span></label>
+      <input type="text" id="modalName" placeholder="例：窓のサッシを拭く" maxlength="60" />
+    </div>
+
+    <div class="form-group">
+      <label>備考（任意）</label>
+      <textarea id="modalNote" placeholder="例：乾拭き→水拭きで対応" maxlength="120"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>所要時間</label>
+      <div class="radio-group" id="timeGroup">
+        <button class="radio-btn" data-val="short" onclick="selectRadio('timeGroup',this)">〜5分</button>
+        <button class="radio-btn" data-val="mid"   onclick="selectRadio('timeGroup',this)">5〜15分</button>
+        <button class="radio-btn" data-val="long"  onclick="selectRadio('timeGroup',this)">15分〜</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>優先度</label>
+      <div class="radio-group" id="priorityGroup">
+        <button class="radio-btn" data-val="high" onclick="selectRadio('priorityGroup',this)">🔴 高</button>
+        <button class="radio-btn" data-val="mid"  onclick="selectRadio('priorityGroup',this)">🟡 中</button>
+        <button class="radio-btn" data-val="low"  onclick="selectRadio('priorityGroup',this)">⚪ 低</button>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal('taskModalOverlay')">キャンセル</button>
+      <button class="btn btn-save"   onclick="saveTaskModal()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- モーダル（エリア編集・追加） -->
+<div class="modal-overlay" id="sectionModalOverlay" onclick="onOverlayClick(event,'sectionModalOverlay')">
+  <div class="modal">
+    <div class="modal-title" id="sectionModalTitle">エリアを編集</div>
+
+    <div class="form-group">
+      <label>エリア名 <span style="color:#ef4444">*</span></label>
+      <input type="text" id="secModalName" placeholder="例：トイレ・洗面所" maxlength="30" />
+    </div>
+
+    <div class="form-group">
+      <label>アイコン</label>
+      <div class="icon-grid" id="iconGrid"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal('sectionModalOverlay')">キャンセル</button>
+      <button class="btn btn-save"   onclick="saveSectionModal()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   デフォルトタスクデータ
+   time: 'short'(〜5分) | 'mid'(5〜15分) | 'long'(15分〜)
+   priority: 'high' | 'mid' | 'low'
+============================================================ */
+const DEFAULT_SECTIONS = [
+  {
+    id: 'entrance', icon: '🚪', title: 'エントランス・廊下',
+    tasks: [
+      { id:'e1', name:'ドアストッパーを拭く',         note:'汚れが溜まりやすい。乾拭き→水拭きで対応',          time:'short', priority:'high' },
+      { id:'e2', name:'ドアノブ・取っ手を拭く',        note:'消毒スプレーを使用',                              time:'short', priority:'high' },
+      { id:'e3', name:'傘立て周辺を整理する',           note:'壊れた傘・忘れ物の傘を確認',                      time:'short', priority:'mid'  },
+      { id:'e4', name:'掲示物・貼り紙のはがれを確認',  note:'浮いているものはテープで補強',                      time:'short', priority:'low'  },
+      { id:'e5', name:'廊下の隅・幅木を拭く',          note:'見落とされやすい埃スポット',                        time:'mid',   priority:'mid'  },
+    ]
+  },
+  {
+    id: 'classroom', icon: '📚', title: '教室内（机・棚・備品）',
+    tasks: [
+      { id:'c1', name:'落とし物を一か所にまとめる',    note:'文具・消しゴム・定規など。所定の場所へ',           time:'short', priority:'high' },
+      { id:'c2', name:'赤本（過去問）を整理する',       note:'科目・学校別に並べ直し。背表紙が見えるよう揃える', time:'mid',   priority:'high' },
+      { id:'c3', name:'本棚の拭き掃除をする',           note:'棚板・側面の埃を拭き取る',                        time:'mid',   priority:'high' },
+      { id:'c4', name:'参考書・テキストの並びを整える', note:'バラバラのものをシリーズ・科目順に揃える',          time:'mid',   priority:'mid'  },
+      { id:'c5', name:'机の天板・引き出し前面を拭く',   note:'消しカス・飲み物の跡をチェック',                  time:'mid',   priority:'mid'  },
+      { id:'c6', name:'椅子の座面・背面を拭く',         note:'布地の場合は粘着テープで埃を取る',                time:'mid',   priority:'low'  },
+      { id:'c7', name:'机・椅子の脚の汚れを拭く',       note:'床との接地部分に汚れが溜まりやすい',              time:'long',  priority:'low'  },
+    ]
+  },
+  {
+    id: 'pc', icon: '💻', title: 'パソコン・電子機器',
+    tasks: [
+      { id:'p1', name:'パソコン画面を拭く',              note:'専用クロス使用。強く押さない',                   time:'short', priority:'high' },
+      { id:'p2', name:'キーボードを拭く',                 note:'キーの隙間はエアダスターまたは綿棒',             time:'short', priority:'high' },
+      { id:'p3', name:'マウス・マウスパッドを拭く',       note:'マウス底面（センサー周り）も忘れずに',           time:'short', priority:'mid'  },
+      { id:'p4', name:'PCデスク周辺のケーブルを整える',   note:'束ねてケーブルボックスへ。床のケーブルも確認',   time:'mid',   priority:'low'  },
+      { id:'p5', name:'プリンター・コピー機周辺を拭く',   note:'トレイに紙くず・埃がないか確認',                 time:'short', priority:'low'  },
+    ]
+  },
+  {
+    id: 'whiteboard', icon: '✏️', title: 'ホワイトボード・黒板',
+    tasks: [
+      { id:'w1', name:'ホワイトボードを消して拭く',       note:'消しカスを払い、クリーナーで磨く',              time:'short', priority:'high' },
+      { id:'w2', name:'ホワイトボードマーカーを整理する', note:'キャップが外れたものを確認。使えないマーカーを処分', time:'short', priority:'mid' },
+      { id:'w3', name:'イレーザーの埃を払う',             note:'屋外でパンパンと叩く',                          time:'short', priority:'low'  },
+      { id:'w4', name:'黒板・ボード枠の溝を拭く',         note:'チョーク・マーカーの粉が溜まりやすい',           time:'short', priority:'mid'  },
+    ]
+  },
+  {
+    id: 'common', icon: '🏠', title: '共用スペース・受付',
+    tasks: [
+      { id:'k1', name:'受付カウンターを拭く',             note:'表面・引き出し前面・足元まで',                  time:'short', priority:'high' },
+      { id:'k2', name:'照明スイッチ周りを拭く',           note:'手が触れる部分は黒ずみやすい',                  time:'short', priority:'mid'  },
+      { id:'k3', name:'ゴミ箱の中を確認・ゴミを捨てる',  note:'満杯または臭いがある場合は交換',                 time:'short', priority:'high' },
+      { id:'k4', name:'電源タップ・コンセント周りを拭く', note:'埃はショートの原因になる',                      time:'short', priority:'mid'  },
+      { id:'k5', name:'窓のサッシ・桟を拭く',             note:'雑巾を細く折って溝に当てる',                    time:'mid',   priority:'low'  },
+      { id:'k6', name:'エアコンのフィルターを確認する',   note:'埃が多い場合は外して掃除機をかける',             time:'long',  priority:'low'  },
+    ]
+  },
+  {
+    id: 'floor', icon: '🧺', title: '床・全体',
+    tasks: [
+      { id:'f1', name:'目に見えるゴミ・紙くずを拾う',    note:'特に机の下・本棚の奥',                           time:'short', priority:'high' },
+      { id:'f2', name:'床を掃き掃除する（ほうき）',      note:'端から中央へ掃く。机の下もしっかり',              time:'mid',   priority:'mid'  },
+      { id:'f3', name:'モップがけをする',                 note:'水は固く絞る。コンセント周辺は避ける',            time:'long',  priority:'low'  },
+    ]
+  },
+];
+
+const ICON_OPTIONS = ['🚪','📚','💻','✏️','🏠','🧺','🪣','🛁','🚽','🍳','📦','🗂️','🖨️','🎒','📋','🧹','🪴','🔑','💡','🖥️'];
+
+/* ============================================================
+   ストレージ
+============================================================ */
+const DATA_KEY  = 'cleaning_tasks_v2';
+const CHECK_KEY = 'cleaning_checks_v2';
+
+function deepClone(o)   { return JSON.parse(JSON.stringify(o)); }
+
+function loadSections()  {
+  try { const s = localStorage.getItem(DATA_KEY);  if (s) return JSON.parse(s); } catch {}
+  return deepClone(DEFAULT_SECTIONS);
+}
+function saveSections()  { localStorage.setItem(DATA_KEY,  JSON.stringify(sectionsData)); }
+
+function loadChecks()    {
+  try { return JSON.parse(localStorage.getItem(CHECK_KEY)) || {}; } catch { return {}; }
+}
+function saveChecks()    { localStorage.setItem(CHECK_KEY, JSON.stringify(checkState)); }
+
+let sectionsData = loadSections();
+let checkState   = loadChecks();
+let editMode     = false;
+
+/* ============================================================
+   ユニーク ID 生成
+============================================================ */
+function uid() { return 't' + Date.now() + Math.random().toString(36).slice(2,6); }
+
+/* ============================================================
+   レンダリング
+============================================================ */
+function timeBadge(t) {
+  const map = { short:{cls:'time-short',label:'〜5分'}, mid:{cls:'time-mid',label:'5〜15分'}, long:{cls:'time-long',label:'15分〜'} };
+  const m = map[t] || map.short;
+  return `<span class="time-badge ${m.cls}">${m.label}</span>`;
+}
+function priorityDot(p) {
+  const cls = p==='high'?'p-high':p==='mid'?'p-mid':'p-low';
+  const lbl = p==='high'?'優先度：高':p==='mid'?'優先度：中':'優先度：低';
+  return `<span class="priority-dot ${cls}" title="${lbl}"></span>`;
+}
+
+function renderSections() {
+  const container = document.getElementById('taskSections');
+  container.innerHTML = '';
+
+  sectionsData.forEach((section, si) => {
+    const doneCount = section.tasks.filter(t => checkState[t.id]).length;
+    const total     = section.tasks.length;
+    const isCollapsed = !editMode && doneCount === total && total > 0;
+
+    // タスク行
+    const tasksHtml = section.tasks.map((task, ti) => {
+      const done = !!checkState[task.id];
+      return `
+        <div class="task-item ${done?'done':''}"
+             data-sid="${section.id}" data-tid="${task.id}"
+             onclick="onTaskClick(event,'${section.id}','${task.id}')">
+          <span class="drag-handle" title="ドラッグで並び替え">⠿</span>
+          <div class="task-check">${done?'✓':''}</div>
+          <div class="task-info">
+            <div class="task-name">${esc(task.name)}</div>
+            ${task.note ? `<div class="task-note">${esc(task.note)}</div>` : ''}
+          </div>
+          <div class="task-meta">
+            ${timeBadge(task.time)}
+            ${priorityDot(task.priority)}
+          </div>
+          <div class="task-action-btns">
+            <button class="task-btn edit-btn" onclick="openEditTaskModal(event,'${section.id}','${task.id}')">✏ 編集</button>
+            <button class="task-btn del-btn"  onclick="deleteTask(event,'${section.id}','${task.id}')">✕ 削除</button>
+            ${ti > 0
+              ? `<button class="task-btn up-btn" onclick="moveTask(event,'${section.id}','${task.id}',-1)">▲</button>`
+              : `<button class="task-btn up-btn" style="opacity:.25;pointer-events:none">▲</button>`}
+            ${ti < section.tasks.length-1
+              ? `<button class="task-btn dn-btn" onclick="moveTask(event,'${section.id}','${task.id}',1)">▼</button>`
+              : `<button class="task-btn dn-btn" style="opacity:.25;pointer-events:none">▼</button>`}
+          </div>
+        </div>`;
+    }).join('');
+
+    const el = document.createElement('div');
+    el.className = `section${isCollapsed?' collapsed':''}`;
+    el.id = `section-${section.id}`;
+    el.innerHTML = `
+      <div class="section-header"
+           onclick="onSectionHeaderClick(event,'${section.id}')">
+        <span class="section-icon">${section.icon}</span>
+        <span class="section-title">${esc(section.title)}</span>
+        <span class="section-count">${doneCount}/${total}</span>
+        <div class="section-edit-btns" onclick="event.stopPropagation()">
+          <button class="sec-btn" onclick="openEditSectionModal('${section.id}')">✏ 編集</button>
+          ${si > 0
+            ? `<button class="sec-btn" onclick="moveSection('${section.id}',-1)">▲</button>`
+            : `<button class="sec-btn" style="opacity:.25;pointer-events:none">▲</button>`}
+          ${si < sectionsData.length-1
+            ? `<button class="sec-btn" onclick="moveSection('${section.id}',1)">▼</button>`
+            : `<button class="sec-btn" style="opacity:.25;pointer-events:none">▼</button>`}
+          <button class="sec-btn danger" onclick="deleteSection('${section.id}')">✕ 削除</button>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="task-list">${tasksHtml}</div>
+      <div class="add-task-row">
+        <button class="add-task-btn" onclick="openAddTaskModal('${section.id}')">＋ このエリアにタスクを追加</button>
+      </div>`;
+    container.appendChild(el);
+  });
+
+  updateProgress();
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ============================================================
+   進捗バー
+============================================================ */
+function updateProgress() {
+  const allTasks = sectionsData.flatMap(s => s.tasks);
+  const total    = allTasks.length;
+  const done     = allTasks.filter(t => checkState[t.id]).length;
+  const pct      = total ? Math.round((done/total)*100) : 0;
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total} 完了（${pct}%）`;
+  document.getElementById('totalBadge').textContent   = `全${total}件`;
+
+  const msg = document.getElementById('completeMsg');
+  msg.classList.toggle('show', !editMode && done===total && total>0);
+}
+
+/* ============================================================
+   チェック操作
+============================================================ */
+function onTaskClick(e, sid, tid) {
+  if (editMode) return;
+  checkState[tid] = !checkState[tid];
+  saveChecks();
+  renderSections();
+}
+
+/* ============================================================
+   セクション折り畳み
+============================================================ */
+function onSectionHeaderClick(e, sid) {
+  if (editMode) return;
+  const el = document.getElementById(`section-${sid}`);
+  el.classList.toggle('collapsed');
+}
+
+/* ============================================================
+   編集モード
+============================================================ */
+function toggleEditMode() {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  const btn = document.getElementById('editModeBtn');
+  btn.classList.toggle('active', editMode);
+  btn.textContent = editMode ? '✔ 編集を終了' : '✏ 編集モード';
+  renderSections();
+}
+
+/* ============================================================
+   初期値に戻す
+============================================================ */
+function restoreDefaults() {
+  if (!confirm('タスクリストを初期値に戻しますか？\n（チェック状態もリセットされます）')) return;
+  sectionsData = deepClone(DEFAULT_SECTIONS);
+  checkState   = {};
+  saveSections();
+  saveChecks();
+  renderSections();
+}
+
+/* ============================================================
+   チェック全リセット / 全完了
+============================================================ */
+function resetAll() {
+  if (!confirm('全てのチェックをリセットしますか？')) return;
+  checkState = {};
+  saveChecks();
+  renderSections();
+}
+function checkAll() {
+  if (!confirm('全タスクを完了にしますか？')) return;
+  sectionsData.forEach(s => s.tasks.forEach(t => { checkState[t.id] = true; }));
+  saveChecks();
+  renderSections();
+}
+
+/* ============================================================
+   タスク: 移動・削除
+============================================================ */
+function moveTask(e, sid, tid, dir) {
+  e.stopPropagation();
+  const sec = sectionsData.find(s => s.id === sid);
+  if (!sec) return;
+  const i = sec.tasks.findIndex(t => t.id === tid);
+  const j = i + dir;
+  if (j < 0 || j >= sec.tasks.length) return;
+  [sec.tasks[i], sec.tasks[j]] = [sec.tasks[j], sec.tasks[i]];
+  saveSections();
+  renderSections();
+}
+
+function deleteTask(e, sid, tid) {
+  e.stopPropagation();
+  const sec = sectionsData.find(s => s.id === sid);
+  if (!sec) return;
+  const task = sec.tasks.find(t => t.id === tid);
+  if (!task) return;
+  if (!confirm(`「${task.name}」を削除しますか？`)) return;
+  sec.tasks = sec.tasks.filter(t => t.id !== tid);
+  delete checkState[tid];
+  saveSections();
+  saveChecks();
+  renderSections();
+}
+
+/* ============================================================
+   セクション: 移動・削除
+============================================================ */
+function moveSection(sid, dir) {
+  const i = sectionsData.findIndex(s => s.id === sid);
+  const j = i + dir;
+  if (j < 0 || j >= sectionsData.length) return;
+  [sectionsData[i], sectionsData[j]] = [sectionsData[j], sectionsData[i]];
+  saveSections();
+  renderSections();
+}
+
+function deleteSection(sid) {
+  const sec = sectionsData.find(s => s.id === sid);
+  if (!sec) return;
+  const msg = sec.tasks.length > 0
+    ? `「${sec.title}」とその中の ${sec.tasks.length} 件のタスクを全て削除しますか？`
+    : `「${sec.title}」を削除しますか？`;
+  if (!confirm(msg)) return;
+  sec.tasks.forEach(t => delete checkState[t.id]);
+  sectionsData = sectionsData.filter(s => s.id !== sid);
+  saveSections();
+  saveChecks();
+  renderSections();
+}
+
+/* ============================================================
+   モーダル共通
+============================================================ */
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function onOverlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+function selectRadio(groupId, btn) {
+  document.querySelectorAll(`#${groupId} .radio-btn`).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function getRadio(groupId) {
+  const sel = document.querySelector(`#${groupId} .radio-btn.selected`);
+  return sel ? sel.dataset.val : null;
+}
+function setRadio(groupId, val) {
+  document.querySelectorAll(`#${groupId} .radio-btn`).forEach(b => {
+    b.classList.toggle('selected', b.dataset.val === val);
+  });
+}
+
+/* ============================================================
+   タスク編集モーダル
+============================================================ */
+let _taskModal = { sid: null, tid: null }; // 編集中のコンテキスト
+
+function openAddTaskModal(sid) {
+  _taskModal = { sid, tid: null };
+  document.getElementById('taskModalTitle').textContent = '＋ タスクを追加';
+  document.getElementById('modalName').value = '';
+  document.getElementById('modalNote').value = '';
+  setRadio('timeGroup', 'short');
+  setRadio('priorityGroup', 'mid');
+  openModal('taskModalOverlay');
+  setTimeout(() => document.getElementById('modalName').focus(), 100);
+}
+
+function openEditTaskModal(e, sid, tid) {
+  e.stopPropagation();
+  const sec  = sectionsData.find(s => s.id === sid);
+  const task = sec && sec.tasks.find(t => t.id === tid);
+  if (!task) return;
+
+  _taskModal = { sid, tid };
+  document.getElementById('taskModalTitle').textContent = '✏ タスクを編集';
+  document.getElementById('modalName').value = task.name;
+  document.getElementById('modalNote').value = task.note || '';
+  setRadio('timeGroup',     task.time     || 'short');
+  setRadio('priorityGroup', task.priority || 'mid');
+  openModal('taskModalOverlay');
+  setTimeout(() => document.getElementById('modalName').focus(), 100);
+}
+
+function saveTaskModal() {
+  const name = document.getElementById('modalName').value.trim();
+  if (!name) { alert('タスク名を入力してください'); return; }
+
+  const payload = {
+    name,
+    note:     document.getElementById('modalNote').value.trim(),
+    time:     getRadio('timeGroup')     || 'short',
+    priority: getRadio('priorityGroup') || 'mid',
+  };
+
+  const sec = sectionsData.find(s => s.id === _taskModal.sid);
+  if (!sec) return;
+
+  if (_taskModal.tid) {
+    // 編集
+    const task = sec.tasks.find(t => t.id === _taskModal.tid);
+    if (task) Object.assign(task, payload);
+  } else {
+    // 追加
+    sec.tasks.push({ id: uid(), ...payload });
+  }
+
+  saveSections();
+  renderSections();
+  closeModal('taskModalOverlay');
+}
+
+/* ============================================================
+   セクション編集モーダル
+============================================================ */
+let _secModal = { sid: null };
+
+function buildIconGrid(selected) {
+  const grid = document.getElementById('iconGrid');
+  grid.innerHTML = ICON_OPTIONS.map(ic =>
+    `<div class="icon-opt${ic===selected?' selected':''}" onclick="selectIcon(this,'${ic}')">${ic}</div>`
+  ).join('');
+}
+function selectIcon(el, icon) {
+  document.querySelectorAll('.icon-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function getSelectedIcon() {
+  const el = document.querySelector('.icon-opt.selected');
+  return el ? el.textContent : '📋';
+}
+
+function openEditSectionModal(sid) {
+  const sec = sectionsData.find(s => s.id === sid);
+  if (!sec) return;
+  _secModal = { sid };
+  document.getElementById('sectionModalTitle').textContent = '✏ エリアを編集';
+  document.getElementById('secModalName').value = sec.title;
+  buildIconGrid(sec.icon);
+  openModal('sectionModalOverlay');
+  setTimeout(() => document.getElementById('secModalName').focus(), 100);
+}
+
+function openAddSectionModal() {
+  _secModal = { sid: null };
+  document.getElementById('sectionModalTitle').textContent = '＋ エリアを追加';
+  document.getElementById('secModalName').value = '';
+  buildIconGrid('📋');
+  openModal('sectionModalOverlay');
+  setTimeout(() => document.getElementById('secModalName').focus(), 100);
+}
+
+function saveSectionModal() {
+  const name = document.getElementById('secModalName').value.trim();
+  if (!name) { alert('エリア名を入力してください'); return; }
+  const icon = getSelectedIcon();
+
+  if (_secModal.sid) {
+    const sec = sectionsData.find(s => s.id === _secModal.sid);
+    if (sec) { sec.title = name; sec.icon = icon; }
+  } else {
+    sectionsData.push({ id: uid(), icon, title: name, tasks: [] });
+  }
+
+  saveSections();
+  renderSections();
+  closeModal('sectionModalOverlay');
+}
+
+/* ============================================================
+   Enterキーでモーダル保存
+============================================================ */
+document.getElementById('modalName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveTaskModal();
+});
+document.getElementById('secModalName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveSectionModal();
+});
+
+/* ============================================================
+   初期化
+============================================================ */
+renderSections();
+</script>
+</body>
+</html>
