@@ -23,8 +23,7 @@
       --gray-800: #1f2937;
       --radius: 10px;
       --shadow: 0 2px 8px rgba(0,0,0,0.08);
-      /* 拠点カラー（JSで上書き） */
-      --loc-color: #2563eb;
+      --loc-color:  #2563eb;
       --loc-shadow: rgba(37,99,235,0.3);
     }
 
@@ -37,44 +36,76 @@
       min-height: 100vh;
     }
 
-    /* =====================================================
-       拠点選択画面
-    ===================================================== */
+    /* ===== ローディングバー ===== */
+    #loadingBar {
+      position: fixed; top: 0; left: 0; z-index: 999;
+      height: 3px; width: 0%;
+      background: white;
+      transition: width 0.3s ease, opacity 0.4s;
+      opacity: 0;
+    }
+
+    /* ===== 名前入力モーダル ===== */
+    #nameModalWrap {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #nameModalWrap.hidden { display: none; }
+
+    .name-modal {
+      background: white; border-radius: 18px;
+      padding: 36px 24px 28px;
+      width: 100%; max-width: 340px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    }
+    .nm-icon  { font-size: 3rem; margin-bottom: 10px; }
+    .nm-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 6px; }
+    .nm-sub   { font-size: 0.8rem; color: var(--gray-600); margin-bottom: 22px; line-height: 1.6; }
+    .nm-input {
+      width: 100%; padding: 13px; margin-bottom: 12px;
+      border: 2px solid var(--gray-200); border-radius: 10px;
+      font-size: 1.05rem; text-align: center; outline: none;
+      font-family: inherit; transition: border-color 0.15s;
+    }
+    .nm-input:focus { border-color: var(--loc-color); }
+    .nm-btn {
+      width: 100%; padding: 13px;
+      background: var(--loc-color); color: white;
+      border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .nm-btn:hover { opacity: 0.88; }
+
+    /* ===== 拠点選択画面 ===== */
     #locationPicker {
       position: fixed; inset: 0;
       background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      z-index: 200;
-      padding: 24px;
+      z-index: 200; padding: 24px;
     }
     #locationPicker.hidden { display: none; }
 
-    .picker-logo { font-size: 2.8rem; margin-bottom: 8px; }
-    .picker-title {
-      font-size: 1.3rem; font-weight: 800; color: white;
-      letter-spacing: 0.05em; margin-bottom: 6px;
-    }
-    .picker-sub {
-      font-size: 0.82rem; color: rgba(255,255,255,0.55);
-      margin-bottom: 36px;
-    }
+    .picker-logo  { font-size: 2.8rem; margin-bottom: 8px; }
+    .picker-title { font-size: 1.3rem; font-weight: 800; color: white; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .picker-sub   { font-size: 0.82rem; color: rgba(255,255,255,0.55); margin-bottom: 36px; }
 
     .picker-cards {
-      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
-      width: 100%; max-width: 480px;
+      display: flex; gap: 16px; flex-wrap: wrap;
+      justify-content: center; width: 100%; max-width: 480px;
     }
-
     .loc-card {
       flex: 1; min-width: 180px;
       background: rgba(255,255,255,0.07);
       border: 1.5px solid rgba(255,255,255,0.15);
-      border-radius: 16px;
-      padding: 28px 20px;
+      border-radius: 16px; padding: 28px 20px;
       display: flex; flex-direction: column; align-items: center; gap: 10px;
-      cursor: pointer;
-      transition: all 0.18s;
-      text-decoration: none;
+      cursor: pointer; transition: all 0.18s; text-decoration: none;
     }
     .loc-card:hover {
       background: rgba(255,255,255,0.14);
@@ -85,19 +116,15 @@
     .loc-card .loc-emoji { font-size: 2.4rem; }
     .loc-card .loc-name  { font-size: 1rem; font-weight: 700; color: white; text-align: center; }
     .loc-card .loc-btn   {
-      margin-top: 6px;
-      padding: 7px 20px;
-      border-radius: 99px;
-      font-size: 0.82rem; font-weight: 700;
-      border: none; cursor: pointer;
-      transition: opacity 0.15s;
+      margin-top: 6px; padding: 7px 20px;
+      border-radius: 99px; font-size: 0.82rem; font-weight: 700;
+      border: none; cursor: pointer; transition: opacity 0.15s;
     }
     .loc-card .loc-btn:hover { opacity: 0.85; }
 
     /* ===== ヘッダー ===== */
     header {
-      background: var(--loc-color);
-      color: white;
+      background: var(--loc-color); color: white;
       padding: 16px 16px 14px;
       position: sticky; top: 0; z-index: 10;
       box-shadow: 0 2px 12px var(--loc-shadow);
@@ -105,62 +132,63 @@
     }
     body.edit-mode header { background: var(--edit); box-shadow: 0 2px 12px rgba(217,119,6,0.3); }
 
-    .header-top { display: flex; align-items: center; gap: 10px; }
+    .header-top { display: flex; align-items: center; gap: 8px; }
     header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.03em; flex: 1; }
 
     .loc-badge {
-      background: rgba(255,255,255,0.22);
-      border-radius: 99px;
-      padding: 3px 10px;
-      font-size: 0.75rem; font-weight: 700;
-      white-space: nowrap;
+      background: rgba(255,255,255,0.22); border-radius: 99px;
+      padding: 3px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
     }
     .switch-loc-btn {
-      background: rgba(255,255,255,0.18);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.73rem; font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
+      background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+      color: white; border-radius: 6px; padding: 4px 10px;
+      font-size: 0.73rem; font-weight: 600; cursor: pointer; white-space: nowrap;
     }
     .switch-loc-btn:hover { background: rgba(255,255,255,0.3); }
 
     header .subtitle { font-size: 0.75rem; opacity: 0.82; margin-top: 3px; }
 
     .edit-banner {
-      display: none;
-      margin-top: 8px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 6px;
-      padding: 5px 10px;
-      font-size: 0.75rem; font-weight: 600;
+      display: none; margin-top: 8px;
+      background: rgba(0,0,0,0.2); border-radius: 6px;
+      padding: 5px 10px; font-size: 0.75rem; font-weight: 600;
     }
     body.edit-mode .edit-banner { display: block; }
 
-    /* ===== 進捗バー ===== */
     .progress-wrap { margin-top: 10px; }
     .progress-label { display: flex; justify-content: space-between; font-size: 0.76rem; opacity: 0.9; margin-bottom: 5px; }
     .progress-bar-bg { background: rgba(255,255,255,0.3); border-radius: 99px; height: 9px; overflow: hidden; }
     .progress-bar-fill { background: white; height: 100%; border-radius: 99px; transition: width 0.4s ease; }
 
+    /* ===== 名前バー ===== */
+    .name-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      background: white; border-bottom: 1px solid var(--gray-200);
+      font-size: 0.82rem;
+    }
+    .name-bar .nb-label { color: var(--gray-600); }
+    .name-bar .nb-name  { font-weight: 700; color: var(--gray-800); }
+    .nb-btn {
+      padding: 3px 10px; border-radius: 5px;
+      border: 1px solid var(--gray-200); background: white;
+      font-size: 0.73rem; cursor: pointer; color: var(--gray-600); font-weight: 600;
+    }
+    .nb-btn:hover { background: var(--gray-100); }
+    .nb-refresh { margin-left: auto; }
+
     /* ===== コントロール ===== */
     .controls {
       display: flex; flex-wrap: wrap; gap: 8px;
-      padding: 11px 16px;
-      background: white;
+      padding: 11px 16px; background: white;
       border-bottom: 1px solid var(--gray-200);
     }
-
     .btn {
       padding: 7px 13px; border-radius: 6px; border: none;
       font-size: 0.82rem; font-weight: 600; cursor: pointer;
       transition: opacity 0.15s; white-space: nowrap;
     }
     .btn:hover { opacity: 0.78; }
-
     .btn-reset   { background: var(--danger-light); color: var(--danger); }
     .btn-all     { background: var(--success-light); color: var(--success); }
     .btn-print   { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
@@ -168,13 +196,11 @@
     .btn-edit.active { background: var(--edit); color: white; }
     .btn-restore { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-300); display: none; }
     body.edit-mode .btn-restore { display: inline-block; }
-
     .total-badge {
       margin-left: auto;
       background: var(--primary-light); color: var(--primary);
       padding: 6px 12px; border-radius: 6px;
-      font-size: 0.8rem; font-weight: 700;
-      display: flex; align-items: center;
+      font-size: 0.8rem; font-weight: 700; display: flex; align-items: center;
     }
     body.edit-mode .total-badge { background: var(--edit-light); color: var(--edit); }
 
@@ -195,9 +221,9 @@
     }
     body:not(.edit-mode) .section-header { cursor: pointer; user-select: none; }
 
-    .section-icon  { font-size: 1.3rem; line-height: 1; }
-    .section-title { font-size: 0.95rem; font-weight: 700; flex: 1; }
-    .section-count { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; }
+    .section-icon    { font-size: 1.3rem; line-height: 1; }
+    .section-title   { font-size: 0.95rem; font-weight: 700; flex: 1; }
+    .section-count   { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; }
     .section-chevron { font-size: 0.75rem; color: var(--gray-400); transition: transform 0.2s; }
     .section.collapsed .section-chevron { transform: rotate(-90deg); }
 
@@ -205,9 +231,8 @@
     body.edit-mode .section-edit-btns { display: flex; }
 
     .sec-btn {
-      background: none; border: 1px solid var(--gray-200);
-      border-radius: 5px; padding: 3px 7px;
-      font-size: 0.72rem; cursor: pointer;
+      background: none; border: 1px solid var(--gray-200); border-radius: 5px;
+      padding: 3px 7px; font-size: 0.72rem; cursor: pointer;
       color: var(--gray-600); font-weight: 600;
     }
     .sec-btn:hover { background: var(--gray-50); }
@@ -236,20 +261,32 @@
     .task-item.done .task-check { background: var(--success); border-color: var(--success); color: white; }
     body.edit-mode .task-check { display: none; }
 
-    .task-info  { flex: 1; min-width: 0; }
-    .task-name  { font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
-    .task-note  { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; line-height: 1.4; }
-    .task-meta  { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .task-info { flex: 1; min-width: 0; }
+    .task-name { font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
+    .task-note { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; line-height: 1.4; }
+
+    /* ===== 最終チェックバッジ ===== */
+    .lc-badge {
+      display: inline-block; margin-top: 5px;
+      font-size: 0.68rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 99px;
+    }
+    .lc-none   { background: #fee2e2; color: #991b1b; }   /* 未実施 */
+    .lc-old    { background: #ffedd5; color: #9a3412; }   /* 30日超 */
+    .lc-mid    { background: #fef9c3; color: #854d0e; }   /* 7〜30日 */
+    .lc-recent { background: #dcfce7; color: #166534; }   /* 7日以内 */
+    body.edit-mode .lc-badge { display: none; }
+
+    .task-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
     .task-action-btns { display: none; flex-direction: column; gap: 3px; flex-shrink: 0; }
     body.edit-mode .task-action-btns { display: flex; }
-    body.edit-mode .task-meta        { display: none; }
+    body.edit-mode .task-meta { display: none; }
 
     .task-btn {
-      background: none; border: 1px solid var(--gray-200);
-      border-radius: 5px; padding: 3px 8px;
-      font-size: 0.75rem; cursor: pointer; font-weight: 600;
-      line-height: 1.4; white-space: nowrap;
+      background: none; border: 1px solid var(--gray-200); border-radius: 5px;
+      padding: 3px 8px; font-size: 0.75rem; cursor: pointer;
+      font-weight: 600; line-height: 1.4; white-space: nowrap;
     }
     .task-btn.edit-btn { color: var(--primary); border-color: var(--primary-light); }
     .task-btn.edit-btn:hover { background: var(--primary-light); }
@@ -258,10 +295,7 @@
     .task-btn.up-btn, .task-btn.dn-btn { color: var(--gray-600); font-size: 0.7rem; }
     .task-btn.up-btn:hover, .task-btn.dn-btn:hover { background: var(--gray-100); }
 
-    .drag-handle {
-      display: none; cursor: grab; color: var(--gray-300);
-      font-size: 1.1rem; padding: 0 4px; align-self: center;
-    }
+    .drag-handle { display: none; cursor: grab; color: var(--gray-300); font-size: 1.1rem; padding: 0 4px; align-self: center; }
     body.edit-mode .drag-handle { display: block; }
 
     .time-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
@@ -277,86 +311,62 @@
     .add-task-row { display: none; padding: 8px 16px 12px; }
     body.edit-mode .add-task-row { display: block; }
     .add-task-btn {
-      width: 100%; padding: 8px;
-      border: 2px dashed var(--gray-200); border-radius: 8px;
-      background: none; color: var(--gray-400);
-      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+      width: 100%; padding: 8px; border: 2px dashed var(--gray-200); border-radius: 8px;
+      background: none; color: var(--gray-400); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
     }
     .add-task-btn:hover { border-color: var(--edit); color: var(--edit); background: var(--edit-light); }
 
     .add-section-row { display: none; padding: 4px 0 16px; }
     body.edit-mode .add-section-row { display: block; }
     .add-section-btn {
-      width: 100%; padding: 12px;
-      border: 2px dashed var(--gray-300); border-radius: var(--radius);
-      background: none; color: var(--gray-400);
+      width: 100%; padding: 12px; border: 2px dashed var(--gray-300);
+      border-radius: var(--radius); background: none; color: var(--gray-400);
       font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
     }
     .add-section-btn:hover { border-color: var(--edit); color: var(--edit); background: var(--edit-light); }
 
-    /* ===== 完了メッセージ ===== */
     .complete-msg { text-align: center; padding: 40px 20px; color: var(--success); display: none; }
     .complete-msg.show { display: block; }
     .complete-msg .emoji { font-size: 3rem; }
     .complete-msg p { font-size: 1rem; font-weight: 700; margin-top: 10px; }
 
-    /* =====================================================
-       モーダル
-    ===================================================== */
+    /* ===== モーダル ===== */
     .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 100;
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 100; display: flex; align-items: center; justify-content: center;
+      padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
 
     .modal {
-      background: white; border-radius: 14px;
-      padding: 24px 20px 20px; width: 100%; max-width: 460px;
+      background: white; border-radius: 14px; padding: 24px 20px 20px;
+      width: 100%; max-width: 460px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.18);
       transform: translateY(12px); transition: transform 0.2s;
     }
     .modal-overlay.open .modal { transform: translateY(0); }
-
-    .modal-title {
-      font-size: 1rem; font-weight: 700;
-      margin-bottom: 18px; padding-bottom: 12px;
-      border-bottom: 1px solid var(--gray-100); color: var(--gray-800);
-    }
-
+    .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--gray-100); }
     .form-group { margin-bottom: 14px; }
-    .form-group label {
-      display: block; font-size: 0.78rem; font-weight: 700;
-      color: var(--gray-600); margin-bottom: 5px;
+    .form-group label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--gray-600); margin-bottom: 5px; }
+    .form-group input[type="text"], .form-group textarea {
+      width: 100%; padding: 9px 12px; border: 1.5px solid var(--gray-200); border-radius: 7px;
+      font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.15s;
+      background: white; color: var(--gray-800);
     }
-    .form-group input[type="text"],
-    .form-group textarea {
-      width: 100%; padding: 9px 12px;
-      border: 1.5px solid var(--gray-200); border-radius: 7px;
-      font-size: 0.88rem; font-family: inherit; outline: none;
-      transition: border-color 0.15s; background: white; color: var(--gray-800);
-    }
-    .form-group input:focus,
-    .form-group textarea:focus { border-color: var(--primary); }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
     .form-group textarea { resize: vertical; min-height: 64px; }
 
     .radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
     .radio-btn {
-      padding: 6px 12px; border-radius: 6px;
-      border: 1.5px solid var(--gray-200);
+      padding: 6px 12px; border-radius: 6px; border: 1.5px solid var(--gray-200);
       font-size: 0.8rem; font-weight: 600; cursor: pointer;
       background: white; color: var(--gray-600); transition: all 0.12s;
     }
     .radio-btn:hover { border-color: var(--gray-300); }
     .radio-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 
-    .modal-footer {
-      display: flex; gap: 8px; margin-top: 20px;
-      padding-top: 16px; border-top: 1px solid var(--gray-100);
-    }
+    .modal-footer { display: flex; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gray-100); }
     .modal-footer .btn { flex: 1; padding: 10px; font-size: 0.88rem; }
     .btn-save   { background: var(--primary); color: white; }
     .btn-save:hover { opacity: 0.88; }
@@ -364,22 +374,22 @@
 
     .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .icon-opt {
-      width: 36px; height: 36px;
-      border: 1.5px solid var(--gray-200); border-radius: 7px;
+      width: 36px; height: 36px; border: 1.5px solid var(--gray-200); border-radius: 7px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.2rem; cursor: pointer; transition: all 0.12s;
     }
-    .icon-opt:hover  { border-color: var(--edit); background: var(--edit-light); }
+    .icon-opt:hover { border-color: var(--edit); background: var(--edit-light); }
     .icon-opt.selected { border-color: var(--primary); background: var(--primary-light); }
 
     /* ===== 印刷 ===== */
     @media print {
-      #locationPicker { display: none !important; }
+      #locationPicker, #nameModalWrap, #loadingBar { display: none !important; }
       header { position: static; background: none !important; color: black; box-shadow: none; }
-      .switch-loc-btn, .controls, .add-task-row, .add-section-row,
+      .switch-loc-btn, .name-bar, .controls, .add-task-row, .add-section-row,
       .task-action-btns, .section-edit-btns, .drag-handle { display: none !important; }
       .task-check { display: flex !important; }
       .task-meta  { display: flex !important; }
+      .lc-badge   { display: inline-block !important; }
       .section { box-shadow: none; border: 1px solid var(--gray-200); }
       .section.collapsed .task-list { display: block; }
     }
@@ -390,26 +400,37 @@
       .controls { gap: 6px; }
       .btn { padding: 6px 10px; font-size: 0.78rem; }
       .picker-cards { flex-direction: column; }
-      .loc-card { min-width: unset; }
     }
   </style>
 </head>
 <body>
 
-<!-- =====================================================
-     拠点選択画面
-===================================================== -->
+<!-- ローディングバー -->
+<div id="loadingBar"></div>
+
+<!-- 名前入力モーダル（必須・閉じ不可） -->
+<div id="nameModalWrap" class="hidden">
+  <div class="name-modal">
+    <div class="nm-icon">👤</div>
+    <div class="nm-title">お名前を入力してください</div>
+    <p class="nm-sub">チェック時にログへ記録されます。<br>次回以降は自動で入力されます。</p>
+    <input class="nm-input" id="nameInput" type="text" placeholder="例：田中" maxlength="20" />
+    <button class="nm-btn" onclick="saveName()">決定 →</button>
+  </div>
+</div>
+
+<!-- 拠点選択画面 -->
 <div id="locationPicker">
   <div class="picker-logo">🧹</div>
   <div class="picker-title">清掃・整理整頓 タスクリスト</div>
   <div class="picker-sub">拠点を選んでください</div>
   <div class="picker-cards">
-    <a class="loc-card" id="cardHibari" href="?loc=hibari">
+    <a class="loc-card" href="?loc=hibari">
       <span class="loc-emoji">🌿</span>
       <span class="loc-name">ひばりが丘教室</span>
       <span class="loc-btn" style="background:#059669;color:white;">選択する →</span>
     </a>
-    <a class="loc-card" id="cardNerima" href="?loc=nerima">
+    <a class="loc-card" href="?loc=nerima">
       <span class="loc-emoji">🌸</span>
       <span class="loc-name">練馬教室</span>
       <span class="loc-btn" style="background:#7c3aed;color:white;">選択する →</span>
@@ -417,7 +438,7 @@
   </div>
 </div>
 
-<!-- ===== ヘッダー ===== -->
+<!-- ヘッダー -->
 <header>
   <div class="header-top">
     <h1 id="pageTitle">🧹 清掃・整理整頓 タスクリスト</h1>
@@ -437,7 +458,15 @@
   </div>
 </header>
 
-<!-- ===== コントロール ===== -->
+<!-- 名前バー -->
+<div class="name-bar" id="nameBar">
+  <span class="nb-label">👤</span>
+  <span class="nb-name" id="nameDisplay">-</span>
+  <button class="nb-btn" onclick="openNameModal()">変更</button>
+  <button class="nb-btn nb-refresh" onclick="refreshLastChecks()">🔄 最新に更新</button>
+</div>
+
+<!-- コントロール -->
 <div class="controls">
   <button class="btn btn-reset"   onclick="resetAll()">↺ リセット</button>
   <button class="btn btn-all"     onclick="checkAll()">✓ 全完了</button>
@@ -447,7 +476,7 @@
   <span  class="total-badge"      id="totalBadge">0件</span>
 </div>
 
-<!-- ===== メインコンテンツ ===== -->
+<!-- メイン -->
 <main>
   <div id="taskSections"></div>
   <div class="add-section-row">
@@ -459,7 +488,7 @@
   </div>
 </main>
 
-<!-- モーダル（タスク編集・追加） -->
+<!-- タスク編集モーダル -->
 <div class="modal-overlay" id="taskModalOverlay" onclick="onOverlayClick(event,'taskModalOverlay')">
   <div class="modal">
     <div class="modal-title" id="taskModalTitle">タスクを編集</div>
@@ -494,7 +523,7 @@
   </div>
 </div>
 
-<!-- モーダル（エリア編集・追加） -->
+<!-- エリア編集モーダル -->
 <div class="modal-overlay" id="sectionModalOverlay" onclick="onOverlayClick(event,'sectionModalOverlay')">
   <div class="modal">
     <div class="modal-title" id="sectionModalTitle">エリアを編集</div>
@@ -515,6 +544,11 @@
 
 <script>
 /* ============================================================
+   Google Apps Script URL
+============================================================ */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyo1RzxmgGQnP5JYijdVye-Uls3bbJ7NUTGwFpY0eIchQHyCFykzcmQ3yhtDUjOaiv/exec';
+
+/* ============================================================
    拠点設定
 ============================================================ */
 const LOCATION_CONFIG = {
@@ -522,26 +556,20 @@ const LOCATION_CONFIG = {
   nerima: { name: '練馬教室',       emoji: '🌸', color: '#7c3aed', shadow: 'rgba(124,58,237,0.3)' },
 };
 
-// URLパラメーターから拠点を取得
-const locParam = new URLSearchParams(window.location.search).get('loc');
+const locParam  = new URLSearchParams(window.location.search).get('loc');
 const currentLoc = LOCATION_CONFIG[locParam] ? locParam : null;
 
-// 拠点が確定したら選択画面を消してUIを初期化
 if (currentLoc) {
   document.getElementById('locationPicker').classList.add('hidden');
-  applyLocationTheme(currentLoc);
-}
-
-function applyLocationTheme(loc) {
-  const cfg = LOCATION_CONFIG[loc];
+  const cfg = LOCATION_CONFIG[currentLoc];
   document.documentElement.style.setProperty('--loc-color',  cfg.color);
   document.documentElement.style.setProperty('--loc-shadow', cfg.shadow);
-  document.getElementById('locBadge').textContent   = cfg.emoji + ' ' + cfg.name;
+  document.getElementById('locBadge').textContent = cfg.emoji + ' ' + cfg.name;
   document.title = `清掃リスト｜${cfg.name}`;
 }
 
 function switchLocation() {
-  window.location.href = window.location.pathname; // パラメーターなしに戻る → 選択画面へ
+  window.location.href = window.location.pathname;
 }
 
 /* ============================================================
@@ -613,10 +641,11 @@ const DEFAULT_SECTIONS = [
 const ICON_OPTIONS = ['🚪','📚','💻','✏️','🏠','🧺','🪣','🛁','🚽','🍳','📦','🗂️','🖨️','🎒','📋','🧹','🪴','🔑','💡','🖥️'];
 
 /* ============================================================
-   ストレージ（拠点ごとにキーを分ける）
+   ストレージ（拠点別）
 ============================================================ */
 const DATA_KEY  = `cleaning_tasks_v2_${currentLoc  || 'none'}`;
 const CHECK_KEY = `cleaning_checks_v2_${currentLoc || 'none'}`;
+const NAME_KEY  = 'cleaning_person_name';
 
 function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 
@@ -624,7 +653,7 @@ function loadSections() {
   try { const s = localStorage.getItem(DATA_KEY); if (s) return JSON.parse(s); } catch {}
   return deepClone(DEFAULT_SECTIONS);
 }
-function saveSections() { localStorage.setItem(DATA_KEY,  JSON.stringify(sectionsData)); }
+function saveSections() { localStorage.setItem(DATA_KEY, JSON.stringify(sectionsData)); }
 
 function loadChecks() {
   try { return JSON.parse(localStorage.getItem(CHECK_KEY)) || {}; } catch { return {}; }
@@ -634,11 +663,98 @@ function saveChecks() { localStorage.setItem(CHECK_KEY, JSON.stringify(checkStat
 let sectionsData = currentLoc ? loadSections() : [];
 let checkState   = currentLoc ? loadChecks()   : {};
 let editMode     = false;
+let personName   = '';
+let lastChecks   = {}; // { taskId: { ts, by } } ← Google Sheetsから取得
 
 /* ============================================================
-   ユニーク ID
+   ローディングバー
 ============================================================ */
-function uid() { return 't' + Date.now() + Math.random().toString(36).slice(2,6); }
+function setLoading(pct) {
+  const bar = document.getElementById('loadingBar');
+  bar.style.opacity = (pct > 0 && pct < 100) ? '1' : '0';
+  bar.style.width   = pct + '%';
+}
+
+/* ============================================================
+   Google Sheets連携
+============================================================ */
+async function fetchLastChecks() {
+  if (!currentLoc) return {};
+  try {
+    setLoading(30);
+    const res = await fetch(`${SCRIPT_URL}?loc=${currentLoc}`, { cache: 'no-store' });
+    setLoading(80);
+    const data = await res.json();
+    setLoading(100);
+    setTimeout(() => setLoading(0), 500);
+    return data || {};
+  } catch (e) {
+    setLoading(0);
+    console.warn('fetch失敗:', e);
+    return {};
+  }
+}
+
+function logCheck(taskId, taskName) {
+  if (!personName || !currentLoc) return;
+  const params = new URLSearchParams({
+    loc: currentLoc,
+    taskId,
+    taskName,
+    personName,
+    ts: Date.now().toString()
+  });
+  // fire-and-forget（no-corsはレスポンス不要なのでOK）
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  }).catch(() => {});
+}
+
+async function refreshLastChecks() {
+  const btn = document.querySelector('.nb-refresh');
+  if (btn) btn.textContent = '読込中…';
+  lastChecks = await fetchLastChecks();
+  if (btn) btn.textContent = '🔄 最新に更新';
+  renderSections();
+}
+
+/* ============================================================
+   相対時間 / バッジ
+============================================================ */
+function relativeTime(ts) {
+  const diff  = Date.now() - ts;
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins  <  1) return 'たった今';
+  if (mins  < 60) return `${mins}分前`;
+  if (hours < 24) return `${hours}時間前`;
+  if (days  < 30) return `${days}日前`;
+  return `${Math.floor(days / 30)}ヶ月前`;
+}
+
+function lcBadge(taskId) {
+  const lc = lastChecks[taskId];
+  if (!lc || !lc.ts) return '<span class="lc-badge lc-none">未実施</span>';
+  const days = Math.floor((Date.now() - lc.ts) / 86400000);
+  const cls  = days < 7 ? 'lc-recent' : days < 30 ? 'lc-mid' : 'lc-old';
+  return `<span class="lc-badge ${cls}">✓ ${esc(lc.by)}・${relativeTime(lc.ts)}</span>`;
+}
+
+/* ============================================================
+   タスクソート（最終実施が古い順 → 未実施が最上位）
+============================================================ */
+function sortedTasks(tasks) {
+  if (editMode) return tasks;
+  return [...tasks].sort((a, b) => {
+    const ta = lastChecks[a.id]?.ts || 0;
+    const tb = lastChecks[b.id]?.ts || 0;
+    return ta - tb; // 古い順（0 = 未実施 → 一番上）
+  });
+}
 
 /* ============================================================
    レンダリング
@@ -655,7 +771,7 @@ function priorityDot(p) {
 }
 
 function renderSections() {
-  if (!currentLoc) return; // 拠点未選択なら何もしない
+  if (!currentLoc) return;
   const container = document.getElementById('taskSections');
   container.innerHTML = '';
 
@@ -663,9 +779,12 @@ function renderSections() {
     const doneCount   = section.tasks.filter(t => checkState[t.id]).length;
     const total       = section.tasks.length;
     const isCollapsed = !editMode && doneCount === total && total > 0;
+    const displayTasks = sortedTasks(section.tasks);
 
-    const tasksHtml = section.tasks.map((task, ti) => {
+    const tasksHtml = displayTasks.map((task, ti) => {
       const done = !!checkState[task.id];
+      // ▲▼は元配列のインデックスで操作
+      const origIdx = section.tasks.findIndex(t => t.id === task.id);
       return `
         <div class="task-item ${done?'done':''}"
              onclick="onTaskClick(event,'${section.id}','${task.id}')">
@@ -674,6 +793,7 @@ function renderSections() {
           <div class="task-info">
             <div class="task-name">${esc(task.name)}</div>
             ${task.note ? `<div class="task-note">${esc(task.note)}</div>` : ''}
+            ${lcBadge(task.id)}
           </div>
           <div class="task-meta">
             ${timeBadge(task.time)}
@@ -682,10 +802,10 @@ function renderSections() {
           <div class="task-action-btns">
             <button class="task-btn edit-btn" onclick="openEditTaskModal(event,'${section.id}','${task.id}')">✏ 編集</button>
             <button class="task-btn del-btn"  onclick="deleteTask(event,'${section.id}','${task.id}')">✕ 削除</button>
-            ${ti > 0
+            ${origIdx > 0
               ? `<button class="task-btn up-btn" onclick="moveTask(event,'${section.id}','${task.id}',-1)">▲</button>`
               : `<button class="task-btn up-btn" style="opacity:.25;pointer-events:none">▲</button>`}
-            ${ti < section.tasks.length-1
+            ${origIdx < section.tasks.length-1
               ? `<button class="task-btn dn-btn" onclick="moveTask(event,'${section.id}','${task.id}',1)">▼</button>`
               : `<button class="task-btn dn-btn" style="opacity:.25;pointer-events:none">▼</button>`}
           </div>
@@ -741,13 +861,28 @@ function updateProgress() {
 }
 
 /* ============================================================
-   チェック / 折り畳み
+   チェック操作 → Sheetsへ記録
 ============================================================ */
 function onTaskClick(e, sid, tid) {
   if (editMode) return;
-  checkState[tid] = !checkState[tid];
-  saveChecks(); renderSections();
+  const wasChecked = !!checkState[tid];
+  checkState[tid] = !wasChecked;
+
+  if (!wasChecked) {
+    // チェックON → ログ記録
+    const sec  = sectionsData.find(s => s.id === sid);
+    const task = sec?.tasks.find(t => t.id === tid);
+    if (task) {
+      logCheck(tid, task.name);
+      // 楽観的更新（即座に画面を反映）
+      lastChecks[tid] = { ts: Date.now(), by: personName };
+    }
+  }
+
+  saveChecks();
+  renderSections();
 }
+
 function onSectionHeaderClick(e, sid) {
   if (editMode) return;
   document.getElementById(`section-${sid}`).classList.toggle('collapsed');
@@ -778,13 +913,21 @@ function resetAll() {
 }
 function checkAll() {
   if (!confirm('全タスクを完了にしますか？')) return;
-  sectionsData.forEach(s => s.tasks.forEach(t => { checkState[t.id] = true; }));
+  sectionsData.forEach(s => s.tasks.forEach(t => {
+    if (!checkState[t.id]) {
+      checkState[t.id] = true;
+      logCheck(t.id, t.name);
+      lastChecks[t.id] = { ts: Date.now(), by: personName };
+    }
+  }));
   saveChecks(); renderSections();
 }
 
 /* ============================================================
    タスク操作
 ============================================================ */
+function uid() { return 't' + Date.now() + Math.random().toString(36).slice(2,6); }
+
 function moveTask(e, sid, tid, dir) {
   e.stopPropagation();
   const sec = sectionsData.find(s => s.id === sid);
@@ -802,10 +945,6 @@ function deleteTask(e, sid, tid) {
   delete checkState[tid];
   saveSections(); saveChecks(); renderSections();
 }
-
-/* ============================================================
-   セクション操作
-============================================================ */
 function moveSection(sid, dir) {
   const i = sectionsData.findIndex(s => s.id === sid), j = i + dir;
   if (j < 0 || j >= sectionsData.length) return;
@@ -824,6 +963,28 @@ function deleteSection(sid) {
 }
 
 /* ============================================================
+   名前モーダル
+============================================================ */
+let _nameModalForInit = false;
+
+function openNameModal() {
+  _nameModalForInit = false;
+  document.getElementById('nameModalWrap').classList.remove('hidden');
+  document.getElementById('nameInput').value = personName;
+  setTimeout(() => document.getElementById('nameInput').focus(), 100);
+}
+
+function saveName() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) { alert('お名前を入力してください'); return; }
+  personName = name;
+  localStorage.setItem(NAME_KEY, name);
+  document.getElementById('nameDisplay').textContent = name + 'さん';
+  document.getElementById('nameModalWrap').classList.add('hidden');
+  if (_nameModalForInit) { _nameModalForInit = false; initApp(); }
+}
+
+/* ============================================================
    モーダル共通
 ============================================================ */
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
@@ -835,8 +996,7 @@ function selectRadio(groupId, btn) {
   btn.classList.add('selected');
 }
 function getRadio(groupId) {
-  const sel = document.querySelector(`#${groupId} .radio-btn.selected`);
-  return sel ? sel.dataset.val : null;
+  return document.querySelector(`#${groupId} .radio-btn.selected`)?.dataset.val || null;
 }
 function setRadio(groupId, val) {
   document.querySelectorAll(`#${groupId} .radio-btn`).forEach(b => {
@@ -844,9 +1004,6 @@ function setRadio(groupId, val) {
   });
 }
 
-/* ============================================================
-   タスク編集モーダル
-============================================================ */
 let _taskModal = { sid: null, tid: null };
 
 function openAddTaskModal(sid) {
@@ -888,9 +1045,6 @@ function saveTaskModal() {
   saveSections(); renderSections(); closeModal('taskModalOverlay');
 }
 
-/* ============================================================
-   セクション編集モーダル
-============================================================ */
 let _secModal = { sid: null };
 
 function buildIconGrid(selected) {
@@ -934,16 +1088,30 @@ function saveSectionModal() {
   saveSections(); renderSections(); closeModal('sectionModalOverlay');
 }
 
-/* ============================================================
-   Enterキー保存
-============================================================ */
 document.getElementById('modalName').addEventListener('keydown',    e => { if (e.key==='Enter') saveTaskModal(); });
 document.getElementById('secModalName').addEventListener('keydown', e => { if (e.key==='Enter') saveSectionModal(); });
+document.getElementById('nameInput').addEventListener('keydown',    e => { if (e.key==='Enter') saveName(); });
 
 /* ============================================================
    初期化
 ============================================================ */
-if (currentLoc) renderSections();
+async function initApp() {
+  lastChecks = await fetchLastChecks();
+  renderSections();
+}
+
+if (currentLoc) {
+  personName = localStorage.getItem(NAME_KEY) || '';
+  if (!personName) {
+    // 初回：名前入力を促す
+    _nameModalForInit = true;
+    document.getElementById('nameModalWrap').classList.remove('hidden');
+    setTimeout(() => document.getElementById('nameInput').focus(), 100);
+  } else {
+    document.getElementById('nameDisplay').textContent = personName + 'さん';
+    initApp();
+  }
+}
 </script>
 </body>
 </html>
